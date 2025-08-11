@@ -59,6 +59,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
 db.init_app(app)
 with app.app_context():
+    db.drop_all()
     db.create_all()
 
 
