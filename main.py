@@ -5,10 +5,9 @@ from flask.cli import load_dotenv
 from flask_bootstrap import Bootstrap5
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import Integer, String, Float, nullslast
+from sqlalchemy import Integer, String, Float, case
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
-from wtforms.validators import DataRequired
 import requests
 
 '''
@@ -51,27 +50,27 @@ class Movie(db.Model):
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///movies-collection.db"
 db.init_app(app)
 
-
-@app.route("/")
-def home():
-    movies = db.session.execute(
-        db.select(Movie).order_by(nullslast(Movie.rating.desc()))
-    ).scalars().all()
-    i=1
-    for movie in movies:
-        movie_to_update = db.session.execute(db.select(Movie).where(Movie.title == movie.title)).scalar()
-        movie_to_update.ranking = i
-        db.session.commit()
-        i+=1
-
-    new_movies = db.session.execute(
-        db.select(Movie).order_by(nullslast(Movie.rating.desc()))
-    ).scalars().all()
-
-    return render_template("index.html",movies=new_movies)
-
 with app.app_context():
+    db.create_all()
+
+
+@app.route("/", methods=["GET", "HEAD"])
+def home():
+    if request.method == "HEAD":
+        return "", 200
+    
+    movies = db.session.execute(
+    db.select(Movie).order_by(
+        case((Movie.rating.is_(None), 1), else_=0),  # push NULLs last
+        Movie.rating.desc()
+    )
+    ).scalars().all()
+    for i, m in enumerate(movies, start=1):
+        m.ranking = i
     db.session.commit()
+
+
+    return render_template("index.html",movies=movies)
 
 class Edit(FlaskForm):
     rating = StringField("Your Rating Out of 10")
