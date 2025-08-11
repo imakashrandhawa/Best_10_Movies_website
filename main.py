@@ -57,7 +57,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # Optional: keep connections healthy on Render
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
-
+db.init_app(app)
 with app.app_context():
     db.create_all()
 
