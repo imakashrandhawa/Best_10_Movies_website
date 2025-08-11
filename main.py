@@ -47,8 +47,16 @@ class Movie(db.Model):
     img_url: Mapped[str] = mapped_column(String(250), nullable=False)
 
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///movies-collection.db"
-db.init_app(app)
+db_url = os.getenv("DATABASE_URL", "sqlite:///movies-collection.db")
+
+# Render sometimes gives 'postgres://' — SQLAlchemy prefers 'postgresql://'
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+# Optional: keep connections healthy on Render
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
 
 with app.app_context():
     db.create_all()
