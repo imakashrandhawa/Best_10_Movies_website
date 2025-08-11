@@ -150,8 +150,11 @@ def select(id):
     response_new = (requests.get(url_new, headers=headers)).json()
     poster_path = response_new.get("poster_path")
     img_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else ""
+    release_date = response_new.get("release_date") or ""
+    year_str = release_date[:4]
+    year_val = int(year_str) if year_str.isdigit() else 0
     new_movie = Movie(title=response_new['original_title'],
-                      year=response_new['release_date'],
+                      year=year_val,
                       description=response_new['overview'],
                       rating=0,
                       ranking=0,
